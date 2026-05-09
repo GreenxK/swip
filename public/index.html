@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWIP — T'as pas le temps. On résume.</title>
+<meta name="description" content="SWIP — L'actu générée par IA. Informé en 30 secondes. Garanti.">
+<meta property="og:title" content="SWIP — T'as pas le temps. On résume.">
+<meta property="og:description" content="L'actu générée par IA. Informé en 30 secondes. Garanti.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;1,9..40,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card-bg: #16161f;
+    --accent1: #ff3c5f;
+    --accent2: #00e5c3;
+    --accent3: #ffe04b;
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --border: rgba(255,255,255,0.07);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRAIN OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    height: 62px;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-block { display: flex; flex-direction: column; gap: 1px; }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 6px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .logo span { color: var(--accent1); }
+
+  .tagline {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .tag-live {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--accent2);
+    text-transform: uppercase;
+  }
+
+  .dot-live {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent2);
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.6); }
+  }
+
+  .generate-btn {
+    background: var(--accent1);
+    color: #fff;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .generate-btn:hover { background: #ff6080; transform: translateY(-1px); }
+  .generate-btn:disabled { background: #2a2a35; color: #555; cursor: not-allowed; transform: none; }
+
+  /* ── FILTERS ── */
+  .filters {
+    position: fixed;
+    top: 62px; left: 0; right: 0;
+    z-index: 99;
+    display: flex;
+    gap: 8px;
+    padding: 10px 28px;
+    background: rgba(10,10,15,0.80);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+
+  .filter-chip {
+    flex-shrink: 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 5px 13px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.2s;
+  }
+  .filter-chip:hover, .filter-chip.active {
+    background: var(--accent1);
+    border-color: var(--accent1);
+    color: #fff;
+  }
+
+  /* ── MAIN ── */
+  main { padding-top: 118px; padding-bottom: 80px; }
+
+  /* ── PROMPT ZONE ── */
+  .prompt-zone {
+    padding: 20px 28px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .prompt-wrap {
+    flex: 1;
+    position: relative;
+  }
+
+  .prompt-input {
+    width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 13px 16px;
+    border-radius: 10px;
+    resize: none;
+    outline: none;
+    min-height: 48px;
+    max-height: 120px;
+    transition: border-color 0.2s;
+    line-height: 1.5;
+  }
+  .prompt-input:focus { border-color: rgba(255,60,95,0.5); }
+  .prompt-input::placeholder { color: var(--muted); }
+
+  .prompt-submit {
+    background: var(--accent1);
+    color: #fff;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    letter-spacing: 2px;
+    padding: 13px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    white-space: nowrap;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .prompt-submit:hover { background: #ff6080; transform: translateY(-1px); }
+  .prompt-submit:disabled { background: #2a2a35; color: #555; cursor: not-allowed; transform: none; }
+
+  /* ── HERO ── */
+  .hero-zone { padding: 0 28px 24px; }
+
+  .hero-card {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    height: 440px;
+    background: linear-gradient(135deg, #1a0010 0%, #0d0d20 60%, #001a18 100%);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  .hero-card:hover { transform: scale(1.004); }
+
+  .hero-blobs { position: absolute; inset: 0; overflow: hidden; }
+
+  .hero-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.3;
+    animation: float 8s ease-in-out infinite;
+  }
+  .hero-blob-1 { width: 420px; height: 420px; background: var(--accent1); top: -120px; right: -60px; }
+  .hero-blob-2 { width: 320px; height: 320px; background: var(--accent2); bottom: -80px; left: 80px; animation-delay: -4s; }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(15px, -15px); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    padding: 36px;
+    background: linear-gradient(to top, rgba(10,10,15,0.95) 0%, rgba(10,10,15,0.4) 50%, transparent 100%);
+  }
+
+  .hero-category {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent1);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hero-category::before {
+    content: '';
+    display: inline-block;
+    width: 20px; height: 2px;
+    background: var(--accent1);
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(30px, 4.5vw, 50px);
+    line-height: 1.05;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    max-width: 700px;
+  }
+
+  .hero-snippet {
+    font-size: 14px;
+    color: rgba(240,240,245,0.7);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    max-width: 560px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .badge {
+    background: rgba(0,229,195,0.12);
+    color: var(--accent2);
+    border: 1px solid rgba(0,229,195,0.25);
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 28px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── CARDS SCROLL ── */
+  .cards-scroll {
+    display: flex;
+    gap: 14px;
+    padding: 0 28px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cards-scroll::-webkit-scrollbar { display: none; }
+
+  /* ── CARD ── */
+  .news-card {
+    flex-shrink: 0;
+    width: 288px;
+    border-radius: 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    scroll-snap-align: start;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s;
+  }
+  .news-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 24px 50px rgba(0,0,0,0.45);
+    border-color: rgba(255,255,255,0.12);
+  }
+
+  .card-color-bar { height: 3px; width: 100%; }
+
+  .card-body { padding: 18px 20px 20px; }
+
+  .card-category {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-category::before {
+    content: '';
+    display: inline-block;
+    width: 12px; height: 2px;
+    background: currentColor;
+    opacity: 0.6;
+  }
+
+  .card-title {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.45;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+
+  .card-snippet {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-time {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+  }
+
+  .card-read {
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: gap 0.2s;
+  }
+  .news-card:hover .card-read { gap: 8px; }
+  .card-read::after { content: '→'; }
+
+  /* Thèmes catégories */
+  .card--tech .card-color-bar { background: linear-gradient(90deg, var(--accent2), #0090ff); }
+  .card--tech .card-category, .card--tech .card-read { color: var(--accent2); }
+  .card--politique .card-color-bar { background: linear-gradient(90deg, var(--accent1), #ff8a00); }
+  .card--politique .card-category, .card--politique .card-read { color: var(--accent1); }
+  .card--culture .card-color-bar { background: linear-gradient(90deg, #a259ff, #ff6bce); }
+  .card--culture .card-category, .card--culture .card-read { color: #a259ff; }
+  .card--sport .card-color-bar { background: linear-gradient(90deg, var(--accent3), #ff8a00); }
+  .card--sport .card-category, .card--sport .card-read { color: var(--accent3); }
+  .card--science .card-color-bar { background: linear-gradient(90deg, #00e5c3, #0090ff); }
+  .card--science .card-category, .card--science .card-read { color: var(--accent2); }
+  .card--monde .card-color-bar { background: linear-gradient(90deg, #ff6bce, #a259ff); }
+  .card--monde .card-category, .card--monde .card-read { color: #ff6bce); }
+
+  /* ── GRID ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    padding: 0 28px;
+  }
+
+  .wide-card {
+    border-radius: 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s;
+  }
+  .wide-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 42px rgba(0,0,0,0.4);
+    border-color: rgba(255,255,255,0.12);
+  }
+
+  /* ── SKELETON ── */
+  .skeleton {
+    background: linear-gradient(90deg, #1c1c28 25%, #252535 50%, #1c1c28 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s infinite;
+    border-radius: 6px;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .skel-cat { height: 10px; width: 60px; margin-bottom: 12px; }
+  .skel-title { height: 15px; margin-bottom: 7px; }
+  .skel-title-2 { height: 15px; width: 75%; margin-bottom: 14px; }
+  .skel-line { height: 11px; margin-bottom: 6px; }
+  .skel-line-2 { height: 11px; width: 82%; margin-bottom: 6px; }
+  .skel-line-3 { height: 11px; width: 50%; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 28px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 16px; }
+  .empty-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .empty-sub { font-size: 13px; line-height: 1.6; }
+
+  /* ── SPINNER ── */
+  .spinner {
+    display: inline-block;
+    width: 13px; height: 13px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--accent2);
+    color: #000;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    z-index: 9999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(.23,1,.32,1);
+    pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  .divider { height: 24px; }
+
+  /* ── REVEAL ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    header { padding: 0 16px; }
+    .filters { padding: 10px 16px; }
+    .prompt-zone { padding: 16px; }
+    .hero-zone { padding: 0 16px 20px; }
+    .hero-card { height: 360px; }
+    .hero-content { padding: 24px; }
+    .section-label { padding-left: 16px; padding-right: 16px; }
+    .cards-scroll { padding-left: 16px; padding-right: 16px; }
+    .cards-grid { padding: 0 16px; }
+    .toast { bottom: 16px; right: 16px; left: 16px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-block">
+    <div class="logo">SWI<span>P</span></div>
+    <div class="tagline">T'as pas le temps. On résume.</div>
+  </div>
+  <div class="header-right">
+    <div class="tag-live">
+      <div class="dot-live"></div>
+      IA live
+    </div>
+    <button class="generate-btn" id="globalGenBtn" onclick="generateAll()">⚡ Générer</button>
+  </div>
+</header>
+
+<div class="filters">
+  <div class="filter-chip active" onclick="setFilter(this)">Tout</div>
+  <div class="filter-chip" onclick="setFilter(this)">Tech</div>
+  <div class="filter-chip" onclick="setFilter(this)">Politique</div>
+  <div class="filter-chip" onclick="setFilter(this)">Culture</div>
+  <div class="filter-chip" onclick="setFilter(this)">Sport</div>
+  <div class="filter-chip" onclick="setFilter(this)">Science</div>
+  <div class="filter-chip" onclick="setFilter(this)">Monde</div>
+</div>
+
+<main>
+
+  <div class="prompt-zone reveal">
+    <div class="prompt-wrap">
+      <textarea class="prompt-input" id="promptInput"
+        placeholder="Un sujet, un thème… L'IA génère tes actus"
+        rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();generateFromPrompt()}"
+        oninput="autoResize(this)"></textarea>
+    </div>
+    <button class="prompt-submit" id="promptBtn" onclick="generateFromPrompt()">
+      SWIP
+    </button>
+  </div>
+
+  <div class="hero-zone reveal" id="heroZone">
+    <div class="hero-card">
+      <div class="hero-blobs">
+        <div class="hero-blob hero-blob-1"></div>
+        <div class="hero-blob hero-blob-2"></div>
+      </div>
+      <div class="hero-content">
+        <div class="hero-category">À la une</div>
+        <div class="hero-title" id="heroTitle">Clique sur ⚡ Générer pour charger tes actus du moment</div>
+        <div class="hero-snippet" id="heroSnippet">SWIP utilise l'IA pour résumer l'essentiel de l'actualité. Tape un thème ou génère un mix automatique.</div>
+        <div class="hero-meta">
+          <span class="badge">IA GÉNÉRÉ</span>
+          <span id="heroTime">Maintenant</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section-label reveal">Flash infos</div>
+  <div class="cards-scroll reveal" id="flashScroll">
+    <div class="news-card card--tech"><div class="card-color-bar"></div><div class="card-body"><div class="skeleton skel-cat"></div><div class="skeleton skel-title"></div><div class="skeleton skel-title-2"></div><div class="skeleton skel-line"></div><div class="skeleton skel-line-2"></div><div class="skeleton skel-line-3"></div></div></div>
+    <div class="news-card card--politique"><div class="card-color-bar"></div><div class="card-body"><div class="skeleton skel-cat"></div><div class="skeleton skel-title"></div><div class="skeleton skel-title-2"></div><div class="skeleton skel-line"></div><div class="skeleton skel-line-2"></div><div class="skeleton skel-line-3"></div></div></div>
+    <div class="news-card card--culture"><div class="card-color-bar"></div><div class="card-body"><div class="skeleton skel-cat"></div><div class="skeleton skel-title"></div><div class="skeleton skel-title-2"></div><div class="skeleton skel-line"></div><div class="skeleton skel-line-2"></div><div class="skeleton skel-line-3"></div></div></div>
+    <div class="news-card card--sport"><div class="card-color-bar"></div><div class="card-body"><div class="skeleton skel-cat"></div><div class="skeleton skel-title"></div><div class="skeleton skel-title-2"></div><div class="skeleton skel-line"></div><div class="skeleton skel-line-2"></div><div class="skeleton skel-line-3"></div></div></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section-label reveal">En ce moment</div>
+  <div class="cards-grid reveal" id="mainGrid">
+    <div class="empty-state">
+      <div class="empty-icon">⚡</div>
+      <div class="empty-title">Prêt à swiper ?</div>
+      <div class="empty-sub">Génère tes premières actus en un clic.<br>Ou tape un sujet qui t'intéresse.</div>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── UTILS ──
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function showToast(msg, duration = 3200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function timeAgo() {
+  const opts = ['À l\'instant', 'Il y a 2 min', 'Il y a 5 min', 'Il y a 11 min', 'Il y a 23 min', 'Il y a 38 min'];
+  return opts[Math.floor(Math.random() * opts.length)];
+}
+
+function setFilter(el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+const CAT_MAP = {
+  tech: 'card--tech', politique: 'card--politique', culture: 'card--culture',
+  sport: 'card--sport', science: 'card--science', monde: 'card--monde'
+};
+
+function catClass(cat) {
+  return CAT_MAP[cat?.toLowerCase()] || 'card--tech';
+}
+
+// Scroll reveal
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── RENDER ──
+function renderHero(article) {
+  document.getElementById('heroTitle').textContent = article.title;
+  document.getElementById('heroSnippet').textContent = article.snippet || '';
+  document.getElementById('heroTime').textContent = timeAgo();
+}
+
+function cardHTML(a, idx) {
+  const cat = (a.category || 'tech').toLowerCase();
+  const cls = catClass(cat);
+  return `
+    <div class="news-card ${cls}" style="animation-delay:${idx*60}ms">
+      <div class="card-color-bar"></div>
+      <div class="card-body">
+        <div class="card-category">${cat}</div>
+        <div class="card-title">${a.title}</div>
+        <div class="card-snippet">${a.snippet}</div>
+        <div class="card-footer">
+          <span class="card-time">${timeAgo()}</span>
+          <span class="card-read">Lire</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function wideCardHTML(a, idx) {
+  const cat = (a.category || 'tech').toLowerCase();
+  const cls = catClass(cat);
+  return `
+    <div class="wide-card ${cls}" style="opacity:0;transform:translateY(16px);transition:opacity 0.4s ${idx*80}ms ease,transform 0.4s ${idx*80}ms ease">
+      <div class="card-color-bar"></div>
+      <div class="card-body">
+        <div class="card-category">${cat}</div>
+        <div class="card-title">${a.title}</div>
+        <div class="card-snippet">${a.snippet}</div>
+        <div class="card-footer">
+          <span class="card-time">${timeAgo()}</span>
+          <span class="card-read">Lire</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderFlash(articles) {
+  document.getElementById('flashScroll').innerHTML = articles.slice(0, 6).map(cardHTML).join('');
+}
+
+function renderGrid(articles) {
+  const grid = document.getElementById('mainGrid');
+  grid.innerHTML = articles.slice(6).map(wideCardHTML).join('');
+  requestAnimationFrame(() => {
+    grid.querySelectorAll('.wide-card').forEach(el => {
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    });
+  });
+}
+
+function showSkeletons() {
+  const cats = ['card--tech','card--politique','card--culture','card--sport','card--science','card--monde'];
+  document.getElementById('flashScroll').innerHTML = cats.map(c => `
+    <div class="news-card ${c}">
+      <div class="card-color-bar"></div>
+      <div class="card-body">
+        <div class="skeleton skel-cat"></div>
+        <div class="skeleton skel-title"></div>
+        <div class="skeleton skel-title-2"></div>
+        <div class="skeleton skel-line"></div>
+        <div class="skeleton skel-line-2"></div>
+        <div class="skeleton skel-line-3"></div>
+      </div>
+    </div>`).join('');
+  document.getElementById('mainGrid').innerHTML = '';
+  document.getElementById('heroTitle').textContent = 'Génération en cours…';
+  document.getElementById('heroSnippet').textContent = 'L\'IA analyse et rédige vos actus…';
+}
+
+// ── API CALL (via proxy sécurisé) ──
+const SYSTEM = `Tu es le rédacteur en chef de SWIP, un site d'actu jeune et percutant alimenté par IA.
+Tu génères des articles d'actualité fictifs mais réalistes, incisifs, dans un style magazine numérique.
+Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks, sans texte avant ou après.
+Format :
+{
+  "hero": { "title": "Titre accrocheur max 12 mots", "snippet": "Lead percutant en 1-2 phrases." },
+  "articles": [
+    { "title": "...", "snippet": "Résumé 2-3 phrases.", "category": "tech|politique|culture|sport|science|monde" }
+  ]
+}
+Génère 1 hero + 10 articles variés. Style : direct, dense, zéro jargon, zéro langue de bois.`;
+
+async function callAPI(prompt) {
+  const res = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, system: SYSTEM })
+  });
+  if (!res.ok) throw new Error('Erreur API');
+  const data = await res.json();
+  const text = data.content?.map(b => b.text || '').join('') || '';
+  return JSON.parse(text.replace(/```json|```/g, '').trim());
+}
+
+// ── GENERATE ──
+async function generateAll() {
+  const btn = document.getElementById('globalGenBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  showSkeletons();
+  try {
+    const result = await callAPI('Génère un mix d\'actualités variées du jour : tech, politique, culture, sport, science, monde. Sujets actuels, angles inattendus, ton jeune et direct.');
+    renderHero(result.hero);
+    renderFlash(result.articles);
+    renderGrid(result.articles);
+    showToast('✓ Actu générée par IA');
+  } catch(e) {
+    showToast('Erreur — réessaie');
+    document.getElementById('heroTitle').textContent = 'Une erreur est survenue. Réessaie.';
+    console.error(e);
+  }
+  btn.disabled = false;
+  btn.innerHTML = '⚡ Régénérer';
+}
+
+async function generateFromPrompt() {
+  const input = document.getElementById('promptInput');
+  const btn = document.getElementById('promptBtn');
+  const query = input.value.trim();
+  if (!query) return;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  showSkeletons();
+  try {
+    const result = await callAPI(`Thème : "${query}". Génère des actus autour de ce sujet avec des angles variés, percutants, inattendus.`);
+    renderHero(result.hero);
+    renderFlash(result.articles);
+    renderGrid(result.articles);
+    showToast(`✓ "${query}" — actu générée`);
+    input.value = '';
+    input.style.height = 'auto';
+  } catch(e) {
+    showToast('Erreur — réessaie');
+    console.error(e);
+  }
+  btn.disabled = false;
+  btn.innerHTML = 'SWIP';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "SWIP — T'as pas le temps. On résume.",
+  "short_name": "SWIP",
+  "description": "L'actu générée par IA en 30 secondes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#ff3c5f",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
